@@ -52,35 +52,68 @@ def __build_extension_env():
             cookie.close()
 
 
-# TODO #113: 2 x loop over prefixes and units
-si = namedtuple(&#34;SI&#34;, (&#34;m&#34;, &#34;cm&#34;, &#34;um&#34;, &#34;nm&#34;, &#34;kg&#34;, &#34;g&#34;, &#34;s&#34;, &#34;K&#34;, &#34;Pa&#34;, &#34;hPa&#34;, &#34;mol&#34;))(
-    m=1.0,
-    cm=0.01,
-    um=1e-6,
-    nm=1e-9,
-    kg=1.0,
-    g=1e-3,
-    s=1.0,
-    K=1.0,
-    Pa=1.0,
-    hPa=100.0,
-    mol=1.0,
-)
-&#34;&#34;&#34; TODO #113 &#34;&#34;&#34;
+def __generate_si():
+    prefixes = {
+        &#34;T&#34;: 1e12,
+        &#34;G&#34;: 1e9,
+        &#34;M&#34;: 1e6,
+        &#34;k&#34;: 1e3,
+        &#34;h&#34;: 1e2,
+        &#34;da&#34;: 1e1,
+        &#34;&#34;: 1e0,
+        &#34;d&#34;: 1e-1,
+        &#34;c&#34;: 1e-2,
+        &#34;m&#34;: 1e-3,
+        &#34;u&#34;: 1e-6,
+        &#34;n&#34;: 1e-9,
+        &#34;p&#34;: 1e-12,
+    }
+    units = {
+        &#34;m&#34;: 1e0,
+        &#34;g&#34;: 1e-3,
+        &#34;s&#34;: 1e0,
+        &#34;K&#34;: 1e0,
+        &#34;Pa&#34;: 1e0,
+        &#34;mol&#34;: 1e0,
+        &#34;W&#34;: 1e0,
+        &#34;J&#34;: 1e0,
+        &#34;N&#34;: 1e0,
+    }
+    return namedtuple(&#34;SI&#34;, [prefix + unit for prefix in prefixes for unit in units])(
+        **{
+            prefix_k + unit_k: prefix_v * unit_v
+            for prefix_k, prefix_v in prefixes.items()
+            for unit_k, unit_v in units.items()
+        }
+    )
+
+
+si = __generate_si()
+&#34;&#34;&#34; a utility namedtuple aimed at clrifying physics-related code by providing
+    SI-prefix-aware unit multipliers, resulting in e.g.: `p = 1000 * si.hPa`
+    notation. Note: no dimensional analysis is done! &#34;&#34;&#34;
 
 with __build_extension_env():
     import _PyPartMC
     from _PyPartMC import *
-    from _PyPartMC import (  # pylint: disable=no-name-in-module
-        __all__,
-        __version__,
-        __versions_of_build_time_dependencies__,
-    )</code></pre>
+    from _PyPartMC import __all__ as _PyPartMC_all  # pylint: disable=no-name-in-module
+    from _PyPartMC import __version__, __versions_of_build_time_dependencies__
+
+    __all__ = tuple([*_PyPartMC_all, &#34;si&#34;])</code></pre>
 </details>
 </section>
 <section>
 </section>
 <section>
+<h2 class="section-title" id="header-variables">Global variables</h2>
+<dl>
+<dt id="PyPartMC.si"><code class="name">var <span class="ident">si</span></code></dt>
+<dd>
+<div class="desc"><p>a utility namedtuple aimed at clrifying physics-related code by providing
+SI-prefix-aware unit multipliers, resulting in e.g.: <code>p = 1000 * si.hPa</code>
+notation. Note: no dimensional analysis is done!</p></div>
+</dd>
+</dl>
 </section>
 <section>
 <h2 class="section-title" id="header-functions">Functions</h2>
@@ -234,6 +267,14 @@ same, but without the \c _a suffix.</p>
 <dt id="PyPartMC.AeroData.frac_dim"><code class="name">var <span class="ident">frac_dim</span></code></dt>
 <dd>
 <div class="desc"><p>Volume fractal dimension (1)</p></div>
+</dd>
+<dt id="PyPartMC.AeroData.kappa"><code class="name">var <span class="ident">kappa</span></code></dt>
+<dd>
+<div class="desc"><p>Returns array of aerosol species hygroscopicity parameter kappa</p></div>
+</dd>
+<dt id="PyPartMC.AeroData.molecular_weights"><code class="name">var <span class="ident">molecular_weights</span></code></dt>
+<dd>
+<div class="desc"><p>Returns array of aerosol species molecular weights</p></div>
 </dd>
 <dt id="PyPartMC.AeroData.n_source"><code class="name">var <span class="ident">n_source</span></code></dt>
 <dd>
@@ -449,10 +490,6 @@ m^3) of the i'th aerosol species.</p>
 <dd>
 <div class="desc"><p>Total moles in the particle (1).</p></div>
 </dd>
-<dt id="PyPartMC.AeroParticle.n_orig_part"><code class="name">var <span class="ident">n_orig_part</span></code></dt>
-<dd>
-<div class="desc"><p>Number of original particles from each source that coagulated to form particle.</p></div>
-</dd>
 <dt id="PyPartMC.AeroParticle.radius"><code class="name">var <span class="ident">radius</span></code></dt>
 <dd>
 <div class="desc"><p>Total radius of the particle (m).</p></div>
@@ -472,6 +509,10 @@ m^3) of the i'th aerosol species.</p>
 <dt id="PyPartMC.AeroParticle.solute_kappa"><code class="name">var <span class="ident">solute_kappa</span></code></dt>
 <dd>
 <div class="desc"><p>Returns the average of the solute kappas (1).</p></div>
+</dd>
+<dt id="PyPartMC.AeroParticle.sources"><code class="name">var <span class="ident">sources</span></code></dt>
+<dd>
+<div class="desc"><p>Number of original particles from each source that coagulated to form particle.</p></div>
 </dd>
 <dt id="PyPartMC.AeroParticle.species_masses"><code class="name">var <span class="ident">species_masses</span></code></dt>
 <dd>
@@ -584,6 +625,10 @@ is typically cleared each time we output data to disk.</p>
 <dd>
 <div class="desc"><p>returns the dry diameter of each particle in the population</p></div>
 </dd>
+<dt id="PyPartMC.AeroState.ids"><code class="name">var <span class="ident">ids</span></code></dt>
+<dd>
+<div class="desc"><p>returns the IDs of all particles.</p></div>
+</dd>
 <dt id="PyPartMC.AeroState.num_concs"><code class="name">var <span class="ident">num_concs</span></code></dt>
 <dd>
 <div class="desc"><p>returns the number concentration of each particle in the population</p></div>
@@ -599,11 +644,26 @@ is typically cleared each time we output data to disk.</p>
 </dl>
 <h3>Methods</h3>
 <dl>
+<dt id="PyPartMC.AeroState.add"><code class="name flex">
+<span>def <span class="ident">add</span></span>(<span>self: _PyPartMC.AeroState, arg0: _PyPartMC.AeroState)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>aero_state += aero_state_delta, including combining the
+weights, so the new concentration is the weighted average of the
+two concentrations.</p></div>
+</dd>
 <dt id="PyPartMC.AeroState.add_particle"><code class="name flex">
 <span>def <span class="ident">add_particle</span></span>(<span>self: _PyPartMC.AeroState, arg0: _PyPartMC.AeroParticle)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>add a particle to an AeroState</p></div>
+</dd>
+<dt id="PyPartMC.AeroState.add_particles"><code class="name flex">
+<span>def <span class="ident">add_particles</span></span>(<span>self: _PyPartMC.AeroState, arg0: _PyPartMC.AeroState)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>aero_state += aero_state_delta, with the weight left unchanged
+so the new concentration is the sum of the two concentrations.</p></div>
 </dd>
 <dt id="PyPartMC.AeroState.bin_average_comp"><code class="name flex">
 <span>def <span class="ident">bin_average_comp</span></span>(<span>self: _PyPartMC.AeroState, arg0: _PyPartMC.BinGrid)</span>
@@ -635,6 +695,12 @@ is typically cleared each time we output data to disk.</p>
 <dd>
 <div class="desc"><p>sample particles for AeroState from an AeroDist</p></div>
 </dd>
+<dt id="PyPartMC.AeroState.make_dry"><code class="name flex">
+<span>def <span class="ident">make_dry</span></span>(<span>self: _PyPartMC.AeroState)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Make all particles dry (water set to zero).</p></div>
+</dd>
 <dt id="PyPartMC.AeroState.masses"><code class="name flex">
 <span>def <span class="ident">masses</span></span>(<span>self: _PyPartMC.AeroState, include: Optional[List[str]] = None, exclude: Optional[List[str]] = None) ‑> List[float]</span>
 </code></dt>
@@ -646,6 +712,12 @@ is typically cleared each time we output data to disk.</p>
 </code></dt>
 <dd>
 <div class="desc"><p>returns the mixing state parameters (d_alpha, d_gamma, chi) of the population</p></div>
+</dd>
+<dt id="PyPartMC.AeroState.mobility_diameters"><code class="name flex">
+<span>def <span class="ident">mobility_diameters</span></span>(<span>self: _PyPartMC.AeroState, arg0: _PyPartMC.EnvState) ‑> List[float]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>returns the mobility diameter of each particle in the population</p></div>
 </dd>
 <dt id="PyPartMC.AeroState.particle"><code class="name flex">
 <span>def <span class="ident">particle</span></span>(<span>self: _PyPartMC.AeroState, arg0: int) ‑> _PyPartMC.AeroParticle</span>
@@ -664,6 +736,25 @@ is typically cleared each time we output data to disk.</p>
 </code></dt>
 <dd>
 <div class="desc"><p>remove particle of a given index</p></div>
+</dd>
+<dt id="PyPartMC.AeroState.sample"><code class="name flex">
+<span>def <span class="ident">sample</span></span>(<span>self: _PyPartMC.AeroState, arg0: _PyPartMC.AeroState, arg1: float)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Generates a random sample by removing particles from
+aero_state_from and adding them to aero_state_to, transfering
+weight as well. This is the equivalent of aero_state_add().</p></div>
+</dd>
+<dt id="PyPartMC.AeroState.sample_particles"><code class="name flex">
+<span>def <span class="ident">sample_particles</span></span>(<span>self: _PyPartMC.AeroState, arg0: _PyPartMC.AeroState, arg1: float)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>!&gt; Generates a random sample by removing particles from
+aero_state_from and adding them to aero_state_to, which must be
+already allocated (and should have its weight set).</p>
+<pre><code>       None of the weights are altered by this sampling, making this the
+       equivalent of aero_state_add_particles().
+</code></pre></div>
 </dd>
 <dt id="PyPartMC.AeroState.volumes"><code class="name flex">
 <span>def <span class="ident">volumes</span></span>(<span>self: _PyPartMC.AeroState, include: Optional[List[str]] = None, exclude: Optional[List[str]] = None) ‑> List[float]</span>
@@ -730,6 +821,10 @@ scenario_t.</p>
 </ul>
 <h3>Instance variables</h3>
 <dl>
+<dt id="PyPartMC.EnvState.air_density"><code class="name">var <span class="ident">air_density</span></code></dt>
+<dd>
+<div class="desc"><p>Air density (kg m^{-3})</p></div>
+</dd>
 <dt id="PyPartMC.EnvState.elapsed_time"><code class="name">var <span class="ident">elapsed_time</span></code></dt>
 <dd>
 <div class="desc"><p>returns time since start_time (s).</p></div>
@@ -959,6 +1054,11 @@ aero_dist_interp_1d(), respectively.</p>
 <ul></ul>
 </div>
 <ul id="index">
+<li><h3><a href="#header-variables">Global variables</a></h3>
+<ul class="">
+<li><code><a title="PyPartMC.si" href="#PyPartMC.si">si</a></code></li>
+</ul>
+</li>
 <li><h3><a href="#header-functions">Functions</a></h3>
 <ul class="">
 <li><code><a title="PyPartMC.condense_equilib_particle" href="#PyPartMC.condense_equilib_particle">condense_equilib_particle</a></code></li>
@@ -990,6 +1090,8 @@ aero_dist_interp_1d(), respectively.</p>
 <li><code><a title="PyPartMC.AeroData.density" href="#PyPartMC.AeroData.density">density</a></code></li>
 <li><code><a title="PyPartMC.AeroData.diam2vol" href="#PyPartMC.AeroData.diam2vol">diam2vol</a></code></li>
 <li><code><a title="PyPartMC.AeroData.frac_dim" href="#PyPartMC.AeroData.frac_dim">frac_dim</a></code></li>
+<li><code><a title="PyPartMC.AeroData.kappa" href="#PyPartMC.AeroData.kappa">kappa</a></code></li>
+<li><code><a title="PyPartMC.AeroData.molecular_weights" href="#PyPartMC.AeroData.molecular_weights">molecular_weights</a></code></li>
 <li><code><a title="PyPartMC.AeroData.n_source" href="#PyPartMC.AeroData.n_source">n_source</a></code></li>
 <li><code><a title="PyPartMC.AeroData.prime_radius" href="#PyPartMC.AeroData.prime_radius">prime_radius</a></code></li>
 <li><code><a title="PyPartMC.AeroData.rad2vol" href="#PyPartMC.AeroData.rad2vol">rad2vol</a></code></li>
@@ -1043,13 +1145,13 @@ aero_dist_interp_1d(), respectively.</p>
 <li><code><a title="PyPartMC.AeroParticle.mass" href="#PyPartMC.AeroParticle.mass">mass</a></code></li>
 <li><code><a title="PyPartMC.AeroParticle.mobility_diameter" href="#PyPartMC.AeroParticle.mobility_diameter">mobility_diameter</a></code></li>
 <li><code><a title="PyPartMC.AeroParticle.moles" href="#PyPartMC.AeroParticle.moles">moles</a></code></li>
-<li><code><a title="PyPartMC.AeroParticle.n_orig_part" href="#PyPartMC.AeroParticle.n_orig_part">n_orig_part</a></code></li>
 <li><code><a title="PyPartMC.AeroParticle.radius" href="#PyPartMC.AeroParticle.radius">radius</a></code></li>
 <li><code><a title="PyPartMC.AeroParticle.refract_core" href="#PyPartMC.AeroParticle.refract_core">refract_core</a></code></li>
 <li><code><a title="PyPartMC.AeroParticle.refract_shell" href="#PyPartMC.AeroParticle.refract_shell">refract_shell</a></code></li>
 <li><code><a title="PyPartMC.AeroParticle.scatter_cross_sect" href="#PyPartMC.AeroParticle.scatter_cross_sect">scatter_cross_sect</a></code></li>
 <li><code><a title="PyPartMC.AeroParticle.set_vols" href="#PyPartMC.AeroParticle.set_vols">set_vols</a></code></li>
 <li><code><a title="PyPartMC.AeroParticle.solute_kappa" href="#PyPartMC.AeroParticle.solute_kappa">solute_kappa</a></code></li>
+<li><code><a title="PyPartMC.AeroParticle.sources" href="#PyPartMC.AeroParticle.sources">sources</a></code></li>
 <li><code><a title="PyPartMC.AeroParticle.species_mass" href="#PyPartMC.AeroParticle.species_mass">species_mass</a></code></li>
 <li><code><a title="PyPartMC.AeroParticle.species_masses" href="#PyPartMC.AeroParticle.species_masses">species_masses</a></code></li>
 <li><code><a title="PyPartMC.AeroParticle.species_volume" href="#PyPartMC.AeroParticle.species_volume">species_volume</a></code></li>
@@ -1061,19 +1163,26 @@ aero_dist_interp_1d(), respectively.</p>
 <li>
 <h4><code><a title="PyPartMC.AeroState" href="#PyPartMC.AeroState">AeroState</a></code></h4>
 <ul class="two-column">
+<li><code><a title="PyPartMC.AeroState.add" href="#PyPartMC.AeroState.add">add</a></code></li>
 <li><code><a title="PyPartMC.AeroState.add_particle" href="#PyPartMC.AeroState.add_particle">add_particle</a></code></li>
+<li><code><a title="PyPartMC.AeroState.add_particles" href="#PyPartMC.AeroState.add_particles">add_particles</a></code></li>
 <li><code><a title="PyPartMC.AeroState.bin_average_comp" href="#PyPartMC.AeroState.bin_average_comp">bin_average_comp</a></code></li>
 <li><code><a title="PyPartMC.AeroState.copy_weight" href="#PyPartMC.AeroState.copy_weight">copy_weight</a></code></li>
 <li><code><a title="PyPartMC.AeroState.crit_rel_humids" href="#PyPartMC.AeroState.crit_rel_humids">crit_rel_humids</a></code></li>
 <li><code><a title="PyPartMC.AeroState.diameters" href="#PyPartMC.AeroState.diameters">diameters</a></code></li>
 <li><code><a title="PyPartMC.AeroState.dist_sample" href="#PyPartMC.AeroState.dist_sample">dist_sample</a></code></li>
 <li><code><a title="PyPartMC.AeroState.dry_diameters" href="#PyPartMC.AeroState.dry_diameters">dry_diameters</a></code></li>
+<li><code><a title="PyPartMC.AeroState.ids" href="#PyPartMC.AeroState.ids">ids</a></code></li>
+<li><code><a title="PyPartMC.AeroState.make_dry" href="#PyPartMC.AeroState.make_dry">make_dry</a></code></li>
 <li><code><a title="PyPartMC.AeroState.masses" href="#PyPartMC.AeroState.masses">masses</a></code></li>
 <li><code><a title="PyPartMC.AeroState.mixing_state" href="#PyPartMC.AeroState.mixing_state">mixing_state</a></code></li>
+<li><code><a title="PyPartMC.AeroState.mobility_diameters" href="#PyPartMC.AeroState.mobility_diameters">mobility_diameters</a></code></li>
 <li><code><a title="PyPartMC.AeroState.num_concs" href="#PyPartMC.AeroState.num_concs">num_concs</a></code></li>
 <li><code><a title="PyPartMC.AeroState.particle" href="#PyPartMC.AeroState.particle">particle</a></code></li>
 <li><code><a title="PyPartMC.AeroState.rand_particle" href="#PyPartMC.AeroState.rand_particle">rand_particle</a></code></li>
 <li><code><a title="PyPartMC.AeroState.remove_particle" href="#PyPartMC.AeroState.remove_particle">remove_particle</a></code></li>
+<li><code><a title="PyPartMC.AeroState.sample" href="#PyPartMC.AeroState.sample">sample</a></code></li>
+<li><code><a title="PyPartMC.AeroState.sample_particles" href="#PyPartMC.AeroState.sample_particles">sample_particles</a></code></li>
 <li><code><a title="PyPartMC.AeroState.total_mass_conc" href="#PyPartMC.AeroState.total_mass_conc">total_mass_conc</a></code></li>
 <li><code><a title="PyPartMC.AeroState.total_num_conc" href="#PyPartMC.AeroState.total_num_conc">total_num_conc</a></code></li>
 <li><code><a title="PyPartMC.AeroState.volumes" href="#PyPartMC.AeroState.volumes">volumes</a></code></li>
@@ -1093,6 +1202,7 @@ aero_dist_interp_1d(), respectively.</p>
 <li>
 <h4><code><a title="PyPartMC.EnvState" href="#PyPartMC.EnvState">EnvState</a></code></h4>
 <ul class="two-column">
+<li><code><a title="PyPartMC.EnvState.air_density" href="#PyPartMC.EnvState.air_density">air_density</a></code></li>
 <li><code><a title="PyPartMC.EnvState.elapsed_time" href="#PyPartMC.EnvState.elapsed_time">elapsed_time</a></code></li>
 <li><code><a title="PyPartMC.EnvState.height" href="#PyPartMC.EnvState.height">height</a></code></li>
 <li><code><a title="PyPartMC.EnvState.pressure" href="#PyPartMC.EnvState.pressure">pressure</a></code></li>
